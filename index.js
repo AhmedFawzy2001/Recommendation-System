@@ -25,9 +25,14 @@ app.use(bodyParser.json());
 
 // Database connection pool
 const pool = new Pool({
-    connectionString: 'your_postgresql_connection_string_here'
-});
-
+    connectionString: process.env.POSTGRES_URL + "?sslmode=require",
+  })
+  
+  pool.connect((err) => {
+      if (err) throw err
+      console.log("Connect to PostgreSQL successfully!")
+  })
+  
 // User Registration API
 app.post('/register', async (req, res) => {
     try {
