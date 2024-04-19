@@ -145,71 +145,44 @@ const pool = new Pool({
 
 
 // User Registration API
-app.post('/register', async (req, res) => {
+function generateUniqueId() {
+    const timestamp = Date.now().toString(36);
+    const randomString = Math.random().toString(36).substr(2, 5);
+    return timestamp + randomString;
+}
+
+app.post('/signup', async (req, res) => {
+    const { username, email, password } = req.body;
+    const uniqueId = generateUniqueId();
     try {
-        const { username, email, password } = req.body;
-
-        // Check if email already exists
-        const emailExistsQuery = `
-            SELECT * FROM users
-            WHERE email = $1;
-        `;
-        const emailExistsResult = await pool.query(emailExistsQuery, [email]);
-
-        if (emailExistsResult.rows.length > 0) {
-            return res.status(400).json({ error: 'Email already exists' });
+        const query = 'INSERT INTO users (userid, username, email, password) VALUES ($1, $2, $3, $4) RETURNING userid';
+        const result = await pool.query(query, [uniqueId, username, email, password]);
+        if (result.rows.length > 0) {
+            res.status(201).send({ message: 'New user created', AddedID: result.rows[0].userid });
+        } else {
+            res.status(500).send({ message: 'Failed to create new user' });
         }
-
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Insert user data into the database
-        const insertQuery = `
-            INSERT INTO users (username, email, password)
-            VALUES ($1, $2, $3)
-            RETURNING id, username, email;
-        `;
-        const { rows } = await pool.query(insertQuery, [username, email, hashedPassword]);
-
-        const newUser = rows[0];
-        res.status(201).json({ message: 'Registration successful', user: newUser });
-    } catch (error) {
-        console.error('Error during registration:', error);
-        res.status(500).json({ error: 'An internal server error occurred' });
+    } catch (err) {
+        console.error('Error creating new user:', err);
+        res.status(500).send({ message: 'Failed to create new user' });
     }
 });
 
-// User Login API
 app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
     try {
-        const { email, password } = req.body;
-
-        // Retrieve user from the database
-        const query = `
-            SELECT * FROM users
-            WHERE email = $1;
-        `;
-        const { rows } = await pool.query(query, [email]);
-        const user = rows[0];
-
-        if (!user) {
-            return res.status(401).json({ error: 'Invalid email or password' });
+        const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
+        const result = await pool.query(query, [email, password]);
+        if (result.rows.length > 0) {
+            res.status(200).send({ message: 'Login successful' });
+        } else {
+            res.status(401).send({ message: 'Invalid login credentials' });
         }
-
-        // Compare hashed password with provided password
-        const passwordMatch = await bcrypt.compare(password, user.password);
-
-        if (!passwordMatch) {
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-
-        res.status(200).json({ message: 'Login successful', user: { id: user.id, username: user.username, email: user.email } });
-    } catch (error) {
-        console.error('Error during login:', error);
-        res.status(500).json({ error: 'An internal server error occurred' });
+    } catch (err) {
+        console.error('Error during login:', err);
+        res.status(500).send('An error occurred during login');
     }
 });
-
 
 
 // Start the server
