@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 
 // Database connection pool
 const pool = new Pool({
-    connectionString: process.env.POSTGRES_URL + "?sslmode=require",
+    connectionString: "postgres://default:I6v0XghdjVAW@ep-nameless-forest-a4upu4jj.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require",
   })
   
   pool.connect((err) => {
