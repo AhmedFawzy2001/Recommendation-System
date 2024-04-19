@@ -32,117 +32,6 @@ const pool = new Pool({
       if (err) throw err
       console.log("Connect to PostgreSQL successfully!")
   })
-  
-// User Registration API
-// app.post('/register', async (req, res) => {
-//     try {
-//         const { username, email, password } = req.body;
-
-//         // Hash the password
-//         const hashedPassword = await bcrypt.hash(password, 10);
-
-//         // Insert user data into the database
-//         const query = `
-//             INSERT INTO users (username, email, password)
-//             VALUES ($1, $2, $3)
-//             RETURNING id, username, email;
-//         `;
-//         const { rows } = await pool.query(query, [username, email, hashedPassword]);
-
-//         res.status(201).json(rows[0]);
-//     } catch (error) {
-//         console.error('Error during registration:', error);
-//         res.status(500).json({ error: 'An internal server error occurred' });
-//     }
-// });
-
-// // User Login API
-// app.post('/login', async (req, res) => {
-//     try {
-//         const { username, password } = req.body;
-
-//         // Retrieve user from the database
-//         const query = `
-//             SELECT * FROM users
-//             WHERE username = $1;
-//         `;
-//         const { rows } = await pool.query(query, [username]);
-//         const user = rows[0];
-
-//         if (!user) {
-//             return res.status(404).json({ error: 'User not found' });
-//         }
-
-//         // Compare hashed password with provided password
-//         const passwordMatch = await bcrypt.compare(password, user.password);
-
-//         if (!passwordMatch) {
-//             return res.status(401).json({ error: 'Invalid password' });
-//         }
-
-//         res.status(200).json({ message: 'Login successful', user: { id: user.id, username: user.username, email: user.email } });
-//     } catch (error) {
-//         console.error('Error during login:', error);
-//         res.status(500).json({ error: 'An internal server error occurred' });
-//     }
-// });
-
-
-// User Registration API
-// app.post('/register', async (req, res) => {
-//     try {
-//         const { username, email, password } = req.body;
-
-//         // Hash the password
-//         const hashedPassword = await bcrypt.hash(password, 10);
-
-//         // Insert user data into the database
-//         const query = `
-//             INSERT INTO users (username, email, password)
-//             VALUES ($1, $2, $3)
-//             RETURNING id, username, email;
-//         `;
-//         const { rows } = await pool.query(query, [username, email, hashedPassword]);
-
-//         const newUser = rows[0];
-//         res.status(201).json({ user: newUser });
-//     } catch (error) {
-//         console.error('Error during registration:', error);
-//         res.status(500).json({ error: 'An internal server error occurred' });
-//     }
-// });
-
-// // User Login API
-// app.post('/login', async (req, res) => {
-//     try {
-//         const { username, password } = req.body;
-
-//         // Retrieve user from the database
-//         const query = `
-//             SELECT * FROM users
-//             WHERE username = $1;
-//         `;
-//         const { rows } = await pool.query(query, [username]);
-//         const user = rows[0];
-
-//         if (!user) {
-//             return res.status(404).json({ error: 'User not found' });
-//         }
-
-//         // Compare hashed password with provided password
-//         const passwordMatch = await bcrypt.compare(password, user.password);
-
-//         if (!passwordMatch) {
-//             return res.status(401).json({ error: 'Invalid password' });
-//         }
-
-//         res.status(200).json({ user: { id: user.id, username: user.username, email: user.email } });
-//     } catch (error) {
-//         console.error('Error during login:', error);
-//         res.status(500).json({ error: 'An internal server error occurred' });
-//     }
-// });
-
 
 // User Registration API
 function generateUniqueId() {
@@ -174,7 +63,7 @@ app.post('/login', async (req, res) => {
         const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
         const result = await pool.query(query, [email, password]);
         if (result.rows.length > 0) {
-            res.status(200).send({ message: 'Login successful' });
+            res.status(200).send({ message: 'Login successful',Userid: result.rows[0].userid});
         } else {
             res.status(401).send({ message: 'Invalid login credentials' });
         }
@@ -184,7 +73,54 @@ app.post('/login', async (req, res) => {
     }
 });
 
+function generateTimestamp()
+{
+// Create a new Date object
+const currentDate = new Date();
 
+// Get individual components of the date and time
+const year = currentDate.getFullYear(); // Get the current year
+const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Month is zero-based, so add 1
+const day = String(currentDate.getDate()).padStart(2, '0'); // Get the day of the month
+const hours = String(currentDate.getHours()).padStart(2, '0'); // Get the hours (0-23)
+const minutes = String(currentDate.getMinutes()).padStart(2, '0'); // Get the minutes (0-59)
+const seconds = String(currentDate.getSeconds()).padStart(2, '0'); // Get the seconds (0-59)
+
+// Get the timezone offset in hours
+const timeZoneOffset = currentDate.getTimezoneOffset();
+const timeZoneOffsetHours = Math.abs(Math.floor(timeZoneOffset / 60)).toString().padStart(2, '0');
+const timeZoneSign = timeZoneOffset >= 0 ? '-' : '+';
+
+// Combine date and time components
+const formattedDate = `${year}-${month}-${day}`;
+const formattedTime = `${hours}:${minutes}:${seconds}`;
+const timeZone = `${timeZoneSign}${timeZoneOffsetHours}`;
+
+// Concatenate date, time, and timezone
+const dateTimeWithTimeZone = `${formattedDate} ${formattedTime}${timeZone}`;
+
+// Output the current date and time with timezone
+return dateTimeWithTimeZone;
+}
+app.post('/rating', async (req, res) => {
+    const { userid, moviename ,rating } = req.body;
+    const Movie='SELECT * FROM movies WHERE title =$1; ';
+    const movieResult = await pool.query(Movie,[moviename]);
+    const movieID = movieResult.rows[0].movieid;
+    const timestamp=generateTimestamp();
+    try {
+        const query = 'INSERT INTO ratings (userid, movieid, rating, timestamp) VALUES ($1, $2, $3, $4) RETURNING userid';
+        const result = await pool.query(query, [userid, movieID,rating,timestamp]);
+        if (result.rows.length > 0) {
+            res.status(200).send({ message: 'Rating Successful',Userid: result.rows[0].userid });
+        } else {
+            res.status(401).send({ message: 'Invalid rating credentials' });
+        }
+    } catch (err) {
+        console.error('Error during rating:', err);
+        res.status(500).send('An error occurred during rating');
+    }
+});
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);0
