@@ -20,7 +20,10 @@ const pool = new Pool({
       if (err) throw err
       console.log("Connect to PostgreSQL successfully!")
   })
+<<<<<<< HEAD
 
+=======
+>>>>>>> 38ef08ed713cb731834b988a895d645b1186fd78
 
 // User Registration API
 function generateUniqueId() {
@@ -110,6 +113,36 @@ app.post('/rating', async (req, res) => {
         res.status(500).send('An error occurred during rating');
     }
 });
+
+
+app.post('/recommend',async (req, res) => {
+    const flutterData = req.body;
+    // Send data to Python script
+   // axios.post('http://127.0.0.1:5000/process-data', flutterData)
+     // .then(async (response) => {
+        // Extract the list of IDs from the response
+       // const ids = response.data;
+       const ids=["77","69","6969"];
+        try {
+          // Fetch movies with the retrieved IDs from the database
+          const query = {
+            text: 'SELECT * FROM movies WHERE id = ANY($1)',
+            values: [ids],
+          };
+          const result = await pool.query(query);
+          // Send the fetched movies back to Flutter
+          res.json(result.rows);
+        } catch (error) {
+          console.error(error);
+          res.status(500).send('Error fetching movies');
+        }
+     // })
+    //   .catch((error) => {
+    //     console.error(error);
+    //     res.status(500).send('Error processing data');
+    //   });
+  });
+  
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);0
