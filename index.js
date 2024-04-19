@@ -109,6 +109,22 @@ app.post('/rating', async (req, res) => {
         res.status(500).send('An error occurred during rating');
     }
 });
+
+app.post('/recommend', (req, res) => {
+    const flutterData = req.body;
+  
+    // Send data to Python script
+    axios.post('http://127.0.0.1:5000/process-data', flutterData)
+      .then((response) => {
+        console.log(response.data);
+        res.send(response.data); // Optionally, send response back to Flutter
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error processing data');
+      });
+  });
+  
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);0
