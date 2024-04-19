@@ -143,7 +143,6 @@ const pool = new Pool({
 //     }
 // });
 
-//Test Edits
 
 // User Registration API
 function generateUniqueId() {
