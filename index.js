@@ -20,10 +20,6 @@ const pool = new Pool({
       if (err) throw err
       console.log("Connect to PostgreSQL successfully!")
   })
-<<<<<<< HEAD
-
-=======
->>>>>>> 38ef08ed713cb731834b988a895d645b1186fd78
 
 // User Registration API
 function generateUniqueId() {
