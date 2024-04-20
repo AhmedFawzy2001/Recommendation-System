@@ -21,6 +21,9 @@ const pool = new Pool({
       console.log("Connect to PostgreSQL successfully!")
   })
 
+// Database connection configuration
+
+
 // User Registration API
 function generateUniqueId() {
     const timestamp = Date.now().toString(36);
