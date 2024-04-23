@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
-
+const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -113,27 +113,12 @@ app.post('/rating', async (req, res) => {
     }
 });
 
-app.get('/search', async (req, res) => {
-    const { title } = req.query;
-    try {
-      const result = await pool.query(`SELECT * FROM movies WHERE title ILIKE $1`, ['%' + title + '%']);
-      if (result.rows.length > 0) {
-        res.json(result.rows[0]); // Return the first matching movie
-      } else {
-        res.status(404).json({ error: 'Movie not found' });
-      }
-    } catch (error) {
-      console.error('Error executing query', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
 // app.get('/search', async (req, res) => {
 //     const { title } = req.query;
 //     try {
 //       const result = await pool.query(`SELECT * FROM movies WHERE title ILIKE $1`, ['%' + title + '%']);
 //       if (result.rows.length > 0) {
-//         res.json(result.rows); // Return all matching movies
+//         res.json(result.rows[0]); // Return the first matching movie
 //       } else {
 //         res.status(404).json({ error: 'Movie not found' });
 //       }
@@ -143,35 +128,40 @@ app.get('/search', async (req, res) => {
 //     }
 //   });
 
-  
-
-
-
-app.post('/recommend', async (req, res) => {
+app.get('/search', async (req, res) => {
+    const { title } = req.query;
     try {
-      // Extract data sent from Flutter app
-      const flutterData = req.body;
-      
-      // Send data to Python script
-      const response = await axios.post('/process-data', flutterData);
-  
-      // Extract the list of IDs from the response
-      const ids = response.data;
-  
-      // Fetch movies with the retrieved IDs from the database
-      const query = {
-        text: 'SELECT * FROM movies WHERE id = ANY($1)',
-        values: [ids],
-      };
-      const result = await pool.query(query);
-  
-      // Send the fetched movies back to Flutter
-      res.json(result.rows);
+      const result = await pool.query(`SELECT * FROM movies WHERE title ILIKE $1`, ['%' + title + '%']);
+      if (result.rows.length > 0) {
+        res.json(result.rows); // Return all matching movies
+      } else {
+        res.status(404).json({ error: 'Movie not found' });
+      }
     } catch (error) {
-      console.error(error);
-      res.status(500).send('Error processing request');
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  
+
+
+
+// Route to receive data from Flutter
+app.post('/data', (req, res) => {
+  const flutterData = req.body;
+
+  // Send data to Python script
+  axios.post('https://flask-server-bu42.onrender.com/process-data', flutterData)
+    .then((response) => {
+      console.log(response.data);
+      res.send(response.data); // Optionally, send response back to Flutter
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error processing data');
+    });
+});
 
   app.get('/MovieID', async (req, res) => {
     try {
