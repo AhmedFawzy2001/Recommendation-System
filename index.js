@@ -173,7 +173,22 @@ app.post('/recommend',async (req, res) => {
     //     res.status(500).send('Error processing data');
     //   });
   });
-  
+
+  app.get('/MovieID', async (req, res) => {
+    try {
+      const { id } = req.body;
+      const query = 'SELECT * FROM movies WHERE movieid = $1;';
+      const { rows } = await pool.query(query, [id]);
+      if (rows.length === 0) {
+        return res.status(404).send('this movie is not in the database');
+      }  
+      res.status(200).json(rows[0]);
+    }catch (err) {
+      console.error('Error during getting movie:', id);
+      res.status(500).send('An error occurred during getting');
+    }
+    });
+    
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);0
