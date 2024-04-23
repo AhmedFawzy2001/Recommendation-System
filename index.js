@@ -177,10 +177,10 @@ app.post('/data', (req, res) => {
     });
 });
 
-app.get('/movies', async (req, res) => {
+app.get('/MovieID', async (req, res) => {
   const { id } = req.body; // Extract the movie ID from the request body
   try {
-      const result = await pool.query('SELECT * FROM movies WHERE id = $1', [id]);
+      const result = await pool.query('SELECT * FROM movies WHERE movieid = $1', [id]);
       if (result.rows.length > 0) {
           res.json(result.rows[0]); // Return the first (and only) movie found
       } else {
