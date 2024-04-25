@@ -185,42 +185,31 @@ app.post('/search', async (req, res) => {
   }
 });
 
+app.post('/recommend', async (req, res) => {
+    try {
+      const flutterData = req.body;
   
-
-
-
-
-app.post('/data', async (req, res) => {
-    const flutterData = req.body;
+      // Send data to Python script
+      const pythonResponse = await axios.post('https://flask-server-7qqf.onrender.com//process-data', flutterData);
+      const ids = pythonResponse.data.recommendations;
+      console.log(ids);
+      // Fetch movies with the retrieved IDs from the database
+      const query = {
+        text: 'SELECT * FROM movies WHERE movieid = ANY($1)',
+        values: [ids],
+      };
+      const result = await pool.query(query);
   
-    // Send data to Python script
-    axios.post('https://flask-server-7qqf.onrender.com/process-data', flutterData)
-      .then(async (response) => {
-        const movieIds = response.data.recommendations;
-        const client = await pool.connect();
-  
-        try {
-          const movies = await Promise.all(movieIds.map(async (movieId) => {
-            // Query to fetch movie details by ID
-            const queryText = 'SELECT * FROM movies WHERE id = $1';
-            const { rows } = await client.query(queryText, [movieId]);
-            return rows[0]; // Assuming movie IDs are unique, so we take the first result
-          }));
-  
-          // Send the details of found movies back to Flutter
-          res.send(movies);
-        } catch (error) {
-          console.error('Error executing query:', error);
-          res.status(500).send('Error processing data');
-        } finally {
-          client.release(); // Release the client back to the pool
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send('Error processing data');
-      });
+      // Send the fetched movies back to Flutter
+      res.json(result.rows);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Error processing data');
+    }
   });
+
+
+
 
 
 
