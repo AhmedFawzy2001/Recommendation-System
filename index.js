@@ -1,5 +1,4 @@
 
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
@@ -162,20 +161,37 @@ app.post('/search', async (req, res) => {
 
 
 // Route to receive data from Flutter
-app.post('/data', (req, res) => {
-  const flutterData = req.body;
+// app.post('/data', (req, res) => {
+//   const flutterData = req.body;
 
-  // Send data to Python script
-  axios.post('https://flask-server-bu42.onrender.com/process-data', flutterData)
-    .then((response) => {
-      console.log(response.data);
-      res.send(response.data); // Optionally, send response back to Flutter
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error processing data');
-    });
-});
+//   // Send data to Python script
+//   axios.post('https://flask-server-bu42.onrender.com/process-data', flutterData)
+//     .then((response) => {
+//       console.log(response.data);
+//       res.send(response.data); // Optionally, send response back to Flutter
+//     })
+//     .catch((error) => {
+//       console.error(error);
+//       res.status(500).send('Error processing data');
+//     });
+// });
+
+
+app.post('/data', (req, res) => {
+    const flutterData = req.body;
+  
+    // Send data to Python script
+    axios.post('https://flask-server-bu42.onrender.com/process-data', flutterData)
+      .then((response) => {
+        console.log(response.data);
+        res.send(response.data); // Optionally, send response back to Flutter
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send('Error processing data');
+      });
+  });
+
 
 app.get('/MovieID', async (req, res) => {
   const { id } = req.body; // Extract the movie ID from the request body
