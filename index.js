@@ -9,16 +9,45 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
+// Define your PostgreSQL connection parameters
+const pool = new Pool({
+    user: 'vercel_db_35rb_user',
+    host: 'dpg-coku3qud3nmc739lls40-a.oregon-postgres.render.com',
+    database: 'vercel_db_35rb',
+    password: 'dSYKqdUoLtuKhljWHsE4I0lcl29UxIni',
+    port: 5432, // Default PostgreSQL port
+    ssl: {
+        // You may need to provide SSL certificate options here
+        // Consult your PostgreSQL server documentation for details
+        rejectUnauthorized: false // For development purposes, may need to be configured properly in production
+      }
+  });
+  
+  // Connect to the PostgreSQL database
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Error connecting to PostgreSQL database', err);
+    } else {
+      console.log('Successfully connected to PostgreSQL database');
+      done(); // Release the client back to the pool
+    }
+  });
 
 // Database connection pool
-const pool = new Pool({
-    connectionString: "postgres://default:I6v0XghdjVAW@ep-nameless-forest-a4upu4jj.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require",
-  })
+// const pool = new Pool({
+//     // 
+//   user: 'other_hrcl_user',
+//   host: 'dpg-cokrjga0si5c73e02hcg-a',
+//   database: 'other_hrcl',
+//   password: 'mt1ZE1D6julY4J22SBF3blPjFmDQpSug',
+//   port: 5432, // Default PostgreSQL port
+//   })
   
-  pool.connect((err) => {
-      if (err) throw err
-      console.log("Connect to PostgreSQL successfully!")
-  })
+//   pool.connect((err) => {
+//       if (err) throw err
+//       console.log("Connect to PostgreSQL successfully!")
+//   })
+
 
 // Database connection configuration
 
@@ -160,37 +189,39 @@ app.post('/search', async (req, res) => {
 
 
 
-// Route to receive data from Flutter
-// app.post('/data', (req, res) => {
-//   const flutterData = req.body;
 
-//   // Send data to Python script
-//   axios.post('https://flask-server-bu42.onrender.com/process-data', flutterData)
-//     .then((response) => {
-//       console.log(response.data);
-//       res.send(response.data); // Optionally, send response back to Flutter
-//     })
-//     .catch((error) => {
-//       console.error(error);
-//       res.status(500).send('Error processing data');
-//     });
-// });
-
-
-app.post('/data', (req, res) => {
+app.post('/data', async (req, res) => {
     const flutterData = req.body;
   
     // Send data to Python script
-    axios.post('https://flask-server-bu42.onrender.com/process-data', flutterData)
-      .then((response) => {
-        console.log(response.data);
-        res.send(response.data); // Optionally, send response back to Flutter
+    axios.post('https://flask-server-7qqf.onrender.com/process-data', flutterData)
+      .then(async (response) => {
+        const movieIds = response.data.recommendations;
+        const client = await pool.connect();
+  
+        try {
+          const movies = await Promise.all(movieIds.map(async (movieId) => {
+            // Query to fetch movie details by ID
+            const queryText = 'SELECT * FROM movies WHERE id = $1';
+            const { rows } = await client.query(queryText, [movieId]);
+            return rows[0]; // Assuming movie IDs are unique, so we take the first result
+          }));
+  
+          // Send the details of found movies back to Flutter
+          res.send(movies);
+        } catch (error) {
+          console.error('Error executing query:', error);
+          res.status(500).send('Error processing data');
+        } finally {
+          client.release(); // Release the client back to the pool
+        }
       })
       .catch((error) => {
         console.error(error);
         res.status(500).send('Error processing data');
       });
   });
+
 
 
 app.get('/MovieID', async (req, res) => {
@@ -207,6 +238,20 @@ app.get('/MovieID', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);0
