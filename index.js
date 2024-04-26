@@ -190,7 +190,7 @@ app.post('/recommend', async (req, res) => {
       const flutterData = req.body;
   
       // Send data to Python script
-      const pythonResponse = await axios.post('https://flask-server-7qqf.onrender.com//process-data', flutterData);
+      const pythonResponse = await axios.post('https://movie-recommendation-api-jyof.onrender.com/process-data', flutterData);
       const ids = pythonResponse.data.recommendations;
       console.log(ids);
       // Fetch movies with the retrieved IDs from the database
