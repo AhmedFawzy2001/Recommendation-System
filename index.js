@@ -123,11 +123,12 @@ return dateTimeWithTimeZone;
 }
 
 app.post('/rating', async (req, res) => {
-    const { userid, movieid, rating } = req.body; // Changed from moviename to movieid
+    const { userid, movieid, rating } = req.body;
+    const parsedRating = Math.round(parseFloat(rating)); // Parse to float, round to nearest integer, and then convert to integer
     const timestamp = generateTimestamp();
     try {
         const query = 'INSERT INTO ratings (userid, movieid, rating, timestamp) VALUES ($1, $2, $3, $4) RETURNING userid';
-        const result = await pool.query(query, [userid, movieid, rating, timestamp]);
+        const result = await pool.query(query, [userid, movieid, parseInt(parsedRating), timestamp]); // Convert parsedRating to integer before inserting
         if (result.rows.length > 0) {
             res.status(200).send({ message: 'Rating Successful', Userid: result.rows[0].userid });
         } else {
@@ -138,6 +139,26 @@ app.post('/rating', async (req, res) => {
         res.status(500).send('An error occurred during rating');
     }
 });
+
+// app.post('/rating', async (req, res) => {
+//     const { userid, movieid, rating } = req.body; // Changed from moviename to movieid
+//     const timestamp = generateTimestamp();
+//     try {
+//         const query = 'INSERT INTO ratings (userid, movieid, rating, timestamp) VALUES ($1, $2, $3, $4) RETURNING userid';
+//         const result = await pool.query(query, [userid, movieid, rating, timestamp]);
+//         if (result.rows.length > 0) {
+//             res.status(200).send({ message: 'Rating Successful', Userid: result.rows[0].userid });
+//         } else {
+//             res.status(401).send({ message: 'Invalid rating credentials' });
+//         }
+//     } catch (err) {
+//         console.error('Error during rating:', err);
+//         res.status(500).send('An error occurred during rating');
+//     }
+// });
+
+
+
 // app.post('/rating', async (req, res) => {
 //     const { userid, moviename ,rating } = req.body;
 //     const Movie='SELECT * FROM movies WHERE title =$1; ';
