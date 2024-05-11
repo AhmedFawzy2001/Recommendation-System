@@ -1,0 +1,37 @@
+{
+  "spec_dir": "spec",
+  "spec_files": [
+    "**/*[sS]pec.js"
+  ],
+  "helpers": [
+    "../../node_modules/babel-register/lib/node.js",
+    "../../node_modules/babel-polyfill/dist/polyfill.js"
+  ],
+  "stopSpecOnExpectationFailure": false,
+  "random": true,
+  "reporters": [
+    {
+      "reporter": "jasmine-json-test-reporter",
+      "output": "jasmine-test-results.json"
+    },
+    {
+      "name": "jasmine-spec-reporter",
+      "options": {
+        "displayStacktrace": "all",
+        "displayFailuresSummary": true,
+        "displayPendingSummary": true,
+        "displaySuccessfulSpec": true,
+        "displayFailedSpec": true,
+        "displayPendingSpec": true,
+        "displaySpecDuration": true,
+        "displaySuiteNumber": true,
+        "colors": {
+          "success": "green",
+          "failure": "red",
+          "pending": "yellow"
+        },
+        "customProcessors": []
+      }
+    }
+  ]
+}
