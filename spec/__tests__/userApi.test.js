@@ -1,5 +1,5 @@
 const axios = require('axios');
-const app = require('../../app');
+const app = require('../../index');
 
 describe('User Registration API', () => {
     it('should create a new user and return 201 if successful', async () => {
