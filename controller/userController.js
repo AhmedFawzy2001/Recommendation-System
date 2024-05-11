@@ -8,18 +8,21 @@ const generateUniqueId = () => {
 };
 
 const signUp = async (req, res) => {
-    const { username, email, password } = req.body;
-    const uniqueId = generateUniqueId();
+    const { username, email, password } = req.body;   
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).send({ message: 'Invalid email format' });
+    }
     try {
-        const emailQuery = 'SELECT * FROM users WHERE email = $1';
-        const emailResult = await pool.query(emailQuery, [email]);
-        if (emailResult.rows.length > 0) {
-            return res.status(400).send({ message: 'Email already exists' });
+        const emailCheckQuery = 'SELECT * FROM users WHERE email = $1';
+        const emailCheckResult = await pool.query(emailCheckQuery, [email]);
+        if (emailCheckResult.rows.length > 0) {
+            return res.status(409).send({ message: 'Email already exists' });
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10); // Adjust the salt rounds as needed
+        const uniqueId = generateUniqueId();
         const insertQuery = 'INSERT INTO users (userid, username, email, password) VALUES ($1, $2, $3, $4) RETURNING userid';
         const result = await pool.query(insertQuery, [uniqueId, username, email, hashedPassword]);
-        
         if (result.rows.length > 0) {
             res.status(201).send({ message: 'New user created', addedID: result.rows[0].userid });
         } else {
@@ -30,7 +33,6 @@ const signUp = async (req, res) => {
         res.status(500).send({ message: 'Failed to create new user' });
     }
 };
-
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
