@@ -11,10 +11,17 @@ const signUp = async (req, res) => {
     const { username, email, password } = req.body;
     const uniqueId = generateUniqueId();
     try {
-        const query = 'INSERT INTO users (userid, username, email, password) VALUES ($1, $2, $3, $4) RETURNING userid';
-        const result = await pool.query(query, [uniqueId, username, email, password]);
+        const emailQuery = 'SELECT * FROM users WHERE email = $1';
+        const emailResult = await pool.query(emailQuery, [email]);
+        if (emailResult.rows.length > 0) {
+            return res.status(400).send({ message: 'Email already exists' });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const insertQuery = 'INSERT INTO users (userid, username, email, password) VALUES ($1, $2, $3, $4) RETURNING userid';
+        const result = await pool.query(insertQuery, [uniqueId, username, email, hashedPassword]);
+        
         if (result.rows.length > 0) {
-            res.status(201).send({ message: 'New user created', AddedID: result.rows[0].userid });
+            res.status(201).send({ message: 'New user created', addedID: result.rows[0].userid });
         } else {
             res.status(500).send({ message: 'Failed to create new user' });
         }
@@ -27,10 +34,16 @@ const signUp = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
-        const result = await pool.query(query, [email, password]);
+        const query = 'SELECT * FROM users WHERE email = $1';
+        const result = await pool.query(query, [email]);
         if (result.rows.length > 0) {
-            res.status(200).send({ message: 'Login successful',AddedID: result.rows[0].userid });
+            const user = result.rows[0];
+            const passwordMatch = await bcrypt.compare(password, user.password);
+            if (passwordMatch) {
+                res.status(200).send({ message: 'Login successful', AddedID: user.userid });
+            } else {
+                res.status(401).send({ message: 'Invalid login credentials' });
+            }
         } else {
             res.status(401).send({ message: 'Invalid login credentials' });
         }
