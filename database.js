@@ -15,7 +15,6 @@ const pool = new Pool({
   
 
 
-module.exports = pool;
   // Connect to the PostgreSQL database
   pool.connect((err, client, done) => {
     if (err) {

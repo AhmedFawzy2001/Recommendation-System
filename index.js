@@ -30,6 +30,8 @@ app.listen(PORT, () => {
 });
 
 
+module.exports = app;
+
 // const bcrypt = require('bcrypt');
 // const { Pool } = require('pg');
 // const pool = require("./database");
@@ -292,4 +294,3 @@ app.listen(PORT, () => {
 //       res.status(500).json({ error: 'Internal server error' });
 //   }
 // });
-
