@@ -26,7 +26,7 @@ const recommendMovies = async (req, res) => {
        // Fetch movies with the retrieved IDs from the database
        const query = {
         text: "SELECT * FROM movies WHERE movieid = ANY($1)",
-        values: [userRecommendationResult.rows.recommendation],
+        values: [userRecommendationResult.rows[0].recommendation],
       };
       const result = await pool.query(query);
       res.json(result.rows);
