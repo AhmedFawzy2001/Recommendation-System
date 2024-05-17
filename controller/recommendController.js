@@ -17,7 +17,7 @@ const recommendMovies = async (req, res) => {
     const userFlag = userResult.rows[0].flag;
     if (userFlag) {
       const userRecommendationQuery = {
-        text: "SELECT recommendations FROM users WHERE userid = $1",
+        text: "SELECT recommendation FROM users WHERE userid = $1",
         values: [ID],
       };
       const userRecommendationResult = await pool.query(
