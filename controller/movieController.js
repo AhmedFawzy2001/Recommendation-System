@@ -6,8 +6,8 @@ const getMovieById = async (req, res) => {
         const result = await pool.query('SELECT * FROM movies WHERE movieid = $1', [id]);
 
         const defaultPosterUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEUac6GqZPOX113dy-FfGX6NrDLsp1qEvN1LrkX-GewqK1-Kz8J_PTM2y6&s=10";
-        const defaultGenres = "{{Drama}}";
-        const defaultCast = "{{hady}}";
+        const defaultGenres = "Drama";
+        const defaultCast = "hady";
 
         if (result.rows.length > 0) {
             const movie = result.rows[0];
@@ -15,10 +15,10 @@ const getMovieById = async (req, res) => {
                 movie.poster = defaultPosterUrl;
             }
             if (!movie.cast) {
-                movie.cast = defaultCast;
+                movie.cast = [defaultCast];
             }
             if (!movie.genres) {
-                movie.genres = defaultGenres;
+                movie.genres = [defaultGenres];
             }
             res.json(movie); // Return the movie with defaults applied
         } else {
