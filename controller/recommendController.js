@@ -5,7 +5,7 @@ const pool = require("../database"); // Assuming database.js is in the parent di
 const recommendMovies = async (req, res) => {
   try {
     const flutterData = req.body;
-    const ID = req.id;
+    const ID = req.body.id;
     const userQuery = {
       text: "SELECT flag FROM users WHERE userid = $1",
       values: [ID],
@@ -17,13 +17,20 @@ const recommendMovies = async (req, res) => {
     const userFlag = userResult.rows[0].flag;
     if (userFlag) {
       const userRecommendationQuery = {
-        text: "SELECT recommendations FROM users WHERE userid = $1",
+        text: "SELECT recommendation FROM users WHERE userid = $1",
         values: [ID],
       };
       const userRecommendationResult = await pool.query(
         userRecommendationQuery
       );
-      res.json(userRecommendationResult.rows);
+       // Fetch movies with the retrieved IDs from the database
+       const query = {
+        text: "SELECT * FROM movies WHERE movieid = ANY($1)",
+        values: [userRecommendationResult.rows[0].recommendation],
+      };
+      console.log(userRecommendationResult.rows[0].recommendation);
+      const result = await pool.query(query);
+      res.json(result.rows);
     } else {
       // Send data to Python script
       const pythonResponse = await axios.post(
