@@ -5,7 +5,7 @@ const pool = require("../database"); // Assuming database.js is in the parent di
 const recommendMovies = async (req, res) => {
   try {
     const flutterData = req.body;
-    const ID = req.body;
+    const ID = req.body.id;
     const userQuery = {
       text: "SELECT flag FROM users WHERE userid = $1",
       values: [ID],
