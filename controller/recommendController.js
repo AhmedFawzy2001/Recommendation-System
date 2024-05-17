@@ -23,7 +23,13 @@ const recommendMovies = async (req, res) => {
       const userRecommendationResult = await pool.query(
         userRecommendationQuery
       );
-      res.json(userRecommendationResult.rows);
+       // Fetch movies with the retrieved IDs from the database
+       const query = {
+        text: "SELECT * FROM movies WHERE movieid = ANY($1)",
+        values: [userRecommendationResult.rows],
+      };
+      const result = await pool.query(query);
+      res.json(result.rows);
     } else {
       // Send data to Python script
       const pythonResponse = await axios.post(
