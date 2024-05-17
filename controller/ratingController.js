@@ -8,7 +8,7 @@ const addRating = async (req, res) => {
   try {
     const updateFlagQuery = {
       text: "UPDATE users SET flag = false WHERE userid = $1 RETURNING *",
-      values: [ID],
+      values: [userid],
     };
     await pool.query(updateFlagQuery);
     // Check if the user has already rated the movie
