@@ -5,7 +5,7 @@ const searchMovies = async (req, res) => {
     try {
         const result = await pool.query(`SELECT * FROM movies WHERE title ILIKE $1 LIMIT 20`, ['%' + title + '%']);
         if (result.rows.length > 0) {
-            res.json(result.rows); // Return all matching movies
+            res.json(result.rows); // Return the first 20 matching movies
         } else {
             res.status(404).json({ error: 'Movie not found' });
         }
