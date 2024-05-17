@@ -1,4 +1,5 @@
 const pool = require('../database')
+const bcrypt = require('bcrypt');
 
 // User Registration API
 const generateUniqueId = () => {
