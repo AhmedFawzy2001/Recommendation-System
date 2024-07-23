@@ -20,7 +20,7 @@ const pool = new Pool({
     if (err) {
       console.error('Error connecting to PostgreSQL database', err);
     } else {
-      console.log('Successfully connected to PostgreSQL database');
+      // console.log('Successfully connected to PostgreSQL database');
       done(); // Release the client back to the pool
     }
   });

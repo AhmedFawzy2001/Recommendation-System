@@ -1,55 +1,71 @@
-const axios = require('axios');
+const { searchMovies } = require('../../controller/searchController'); // Assuming the file is named searchMovies.js
+const pool = require('../../database');
 
-describe('POST /search', () => {
-    it('should return matching movies if found', async () => {
-        const mockTitle = 'Mock';
-        const mockMovies = [
-            { 
-                id: '1', 
-                title: 'Mock Movie 1', 
-                poster: 'https://example.com/poster1.jpg', 
-                genres: ['Genre1', 'Genre2'], 
-                cast: ['Actor1', 'Actor2'] 
-            },
-            { 
-                id: '2', 
-                title: 'Mock Movie 2', 
-                poster: 'https://example.com/poster2.jpg', 
-                genres: ['Genre3', 'Genre4'], 
-                cast: ['Actor3', 'Actor4'] 
-            }
+// Mocking pool.query
+jest.mock('../../database', () => ({
+    query: jest.fn(),
+}));
+
+describe('searchMovies function', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    test('should return movies when they are found', async () => {
+        const mockRows = [
+            { title: 'Movie 1', poster: 'poster_url_1', genres: ['Action', 'Adventure'] },
+            { title: 'Movie 2', poster: null },
         ];
-        axios.post = jest.fn().mockResolvedValue({ data: mockMovies, status: 200 });
-    
-        const response = await axios.post('http://localhost:3000/search', { title: mockTitle });
-    
-        expect(response.status).toBe(200);
-        expect(response.data).toEqual(mockMovies);
-    });
-    
-    
+        pool.query.mockResolvedValueOnce({ rows: mockRows });
 
-    it('should return 404 if no matching movies found', async () => {
-        const mockTitle = 'Non-existing Movie';
-        axios.post = jest.fn().mockRejectedValue({ response: { status: 404, data: { error: 'Movie not found' } } });
+        const req = { body: { title: 'Movie' } };
+        const res = {
+            json: jest.fn(),
+            status: jest.fn().mockReturnThis(),
+        };
 
-        try {
-            await axios.post('http://localhost:3000/search', { title: mockTitle });
-        } catch (error) {
-            expect(error.response.status).toBe(404);
-            expect(error.response.data).toEqual({ error: 'Movie not found' });
-        }
+        await searchMovies(req, res);
+
+        expect(pool.query).toHaveBeenCalledWith(
+            `SELECT * FROM movies WHERE title ILIKE $1 LIMIT 20`,
+            ['%Movie%']
+        );
+        expect(res.json).toHaveBeenCalledWith([
+            { title: 'Movie 1', poster: 'poster_url_1', genres: ['Action', 'Adventure'], cast: ['hady'] },
+            { title: 'Movie 2', poster: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEUac6GqZPOX113dy-FfGX6NrDLsp1qEvN1LrkX-GewqK1-Kz8J_PTM2y6&s=10', genres: ['Drama'], cast: ['hady'] },
+        ]);
     });
 
-    it('should return 500 if an internal server error occurs', async () => {
-        const mockTitle = 'Mock Movie';
-        axios.post = jest.fn().mockRejectedValue({ response: { status: 500, data: { error: 'Internal server error' } } });
+    test('should return 404 error when no movies are found', async () => {
+        pool.query.mockResolvedValueOnce({ rows: [] });
 
-        try {
-            await axios.post('http://localhost:3000/search', { title: mockTitle });
-        } catch (error) {
-            expect(error.response.status).toBe(500);
-            expect(error.response.data).toEqual({ error: 'Internal server error' });
-        }
+        const req = { body: { title: 'Non-existent Movie' } };
+        const res = {
+            json: jest.fn(),
+            status: jest.fn().mockReturnThis(),
+        };
+
+        await searchMovies(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Movie not found' });
+    });
+
+    test('should return 500 error when an error occurs', async () => {
+        const mockError = new Error('Database error');
+        console.error = jest.fn(); // Mocking console.error
+        pool.query.mockRejectedValueOnce(mockError);
+
+        const req = { body: { title: 'Movie' } };
+        const res = {
+            json: jest.fn(),
+            status: jest.fn().mockReturnThis(),
+        };
+
+        await searchMovies(req, res);
+
+        expect(console.error).toHaveBeenCalledWith('Error executing query', mockError);
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
     });
 });

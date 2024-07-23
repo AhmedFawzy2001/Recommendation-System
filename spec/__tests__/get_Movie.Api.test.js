@@ -1,46 +1,55 @@
-const axios = require('axios');
+const { getMovieById } = require('../../controller/movieController'); // Adjust the path to your module
+const pool = require('../../database'); // Adjust the path to your database module
 
-describe('GET /MovieID', () => {
-    it('should return the movie if found', async () => {
-        // Mocking the axios.get method
-        const mockMovie = {
-            movieid: "182167",
-            imdbid: "tt0023812",
-            tmdbid: "66822",
-            title: "Birds in the Spring",
-            poster: "https://image.tmdb.org/t/p/original/3PH9xmPp8azqgwvcgFTJuNKEHFF.jpg",
-            genres: ["Animation", "Comedy"],
-            cast: ["Marion Darlington", "Clarence Nash", "Purv Pullen", "Mae Questel"]
+jest.mock('../../database'); // Mock the database module
+
+describe('getMovieById API', () => {
+    let req, res;
+
+    beforeEach(() => {
+        req = { body: { id: 1 } };
+        res = {
+            json: jest.fn(),
+            status: jest.fn(() => res),
         };
-        axios.get = jest.fn().mockResolvedValue({ data: mockMovie, status: 201 }); // Adding status property
-    
-        const response = await axios.get('http://localhost:3000/MovieID', { data: { id: 182167 } });
-    
-        expect(response.status).toBe(201);
-        expect(response.data).toEqual(mockMovie);
+        pool.query.mockReset();
     });
 
-    it('should return 404 if movie not found', async () => {
-        // Mocking the axios.get method
-        axios.get = jest.fn().mockRejectedValue({ response: { status: 404, data: { error: 'Movie not found' } } });
+    it('should return the movie with default values and cast details applied', async () => {
+        pool.query
+            .mockResolvedValueOnce({ rows: [{ movieid: 1, title: 'Test Movie', poster: null, genres: ['Drama'], cast: null }] })
+            .mockResolvedValueOnce({ rows: [{ cast_names: ['Actor 1', 'Actor 2'], photo_links: ['http://photo1', 'http://photo2'] }] });
 
-        try {
-            await axios.get('http://localhost:3000/MovieID', { data: { id: 2 } });
-        } catch (error) {
-            expect(error.response.status).toBe(404);
-            expect(error.response.data).toEqual({ error: 'Movie not found' });
-        }
+        await getMovieById(req, res);
+
+        expect(pool.query).toHaveBeenCalledTimes(2);
+        expect(res.json).toHaveBeenCalledWith({
+            movieid: 1,
+            title: 'Test Movie',
+            poster: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEUac6GqZPOX113dy-FfGX6NrDLsp1qEvN1LrkX-GewqK1-Kz8J_PTM2y6&s=10",
+            genres: ['Drama'],
+            cast: ['Actor 1', 'Actor 2'],
+            cast_photos: ['http://photo1', 'http://photo2'],
+        });
     });
 
-    it('should return 500 if an internal server error occurs', async () => {
-        // Mocking the axios.get method
-        axios.get = jest.fn().mockRejectedValue({ response: { status: 500, data: { error: 'Internal server error' } } });
+    it('should return 404 if the movie is not found', async () => {
+        pool.query.mockResolvedValueOnce({ rows: [] });
 
-        try {
-            await axios.get('http://localhost:3000/MovieID', { data: { id: 3 } });
-        } catch (error) {
-            expect(error.response.status).toBe(500);
-            expect(error.response.data).toEqual({ error: 'Internal server error' });
-        }
+        await getMovieById(req, res);
+
+        expect(pool.query).toHaveBeenCalledTimes(1);
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Movie not found' });
+    });
+
+    it('should return 500 if there is an internal server error', async () => {
+        pool.query.mockRejectedValueOnce(new Error('Database error'));
+
+        await getMovieById(req, res);
+
+        expect(pool.query).toHaveBeenCalledTimes(1);
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
     });
 });

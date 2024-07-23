@@ -1,9 +1,9 @@
-const pool = require("../database"); // Assuming database.js is in the parent directory
+const pool = require("../database"); 
 const { generateTimestamp } = require("../controller/userController");
 
 const addRating = async (req, res) => {
   const { userid, movieid, rating } = req.body;
-  const parsedRating = Math.round(parseFloat(rating)); // Parse to float, round to nearest integer, and then convert to integer
+  const parsedRating = Math.round(parseFloat(rating)); 
   const timestamp = generateTimestamp();
   try {
     const updateFlagQuery = {
@@ -67,6 +67,7 @@ const addRating = async (req, res) => {
     res.status(500).send("An error occurred during rating");
   }
 };
+
 
 module.exports = {
   addRating,
